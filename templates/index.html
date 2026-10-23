@@ -1,312 +1,277 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>LAN Share</title>
-
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            padding: 24px;
-            font-family: Arial, sans-serif;
-            background: #f1f5f9;
-            color: #1e293b;
-        }
-
-        main {
-            max-width: 800px;
-            margin: auto;
-        }
-
-        .panel {
-            background: white;
-            padding: 24px;
-            margin-bottom: 20px;
-            border-radius: 14px;
-            box-shadow: 0 4px 16px #00000008;
-        }
-
-        h1 {
-            color: #2563eb;
-        }
-
-        h2 {
-            font-size: 20px;
-        }
-
-        input,
-        button {
-            font: inherit;
-        }
-
-        input[type="file"] {
-            width: 100%;
-            margin: 16px 0;
-        }
-
-        button,
-        .download {
-            display: inline-block;
-            padding: 10px 14px;
-            border: 0;
-            border-radius: 8px;
-            background: #2563eb;
-            color: white;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .delete {
-            background: #dc2626;
-        }
-
-        .file {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            padding: 16px 0;
-            border-bottom: 1px solid #e2e8f0;
-            overflow-wrap: anywhere;
-        }
-
-        .file:last-child {
-            border-bottom: 0;
-        }
-
-        .file-info {
-            min-width: 0;
-        }
-
-        .muted {
-            color: #64748b;
-            font-size: 14px;
-        }
-
-        .message {
-            padding: 12px;
-            margin: 10px 0;
-            background: #eff6ff;
-            border-radius: 8px;
-            overflow-wrap: anywhere;
-        }
-
-        .actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .actions form {
-            margin: 0;
-        }
-
-        @media (max-width: 500px) {
-            body {
-                padding: 12px;
-            }
-
-            .panel {
-                padding: 16px;
-            }
-
-            .file {
-                align-items: flex-start;
-                flex-direction: column;
-            }
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 24px; font-family: Arial, sans-serif; background: #f1f5f9; color: #1e293b; }
+        main { max-width: 1000px; margin: auto; }
+        .panel { background: white; padding: 24px; margin-bottom: 20px; border-radius: 14px; box-shadow: 0 4px 16px #00000008; }
+        h1 { color: #2563eb; margin-top: 0; }
+        h2 { font-size: 20px; margin-top: 0; }
+        input, button { font: inherit; }
+        input[type="file"] { width: 100%; margin: 16px 0; }
+        button, .download { display: inline-block; padding: 10px 14px; border: 0; border-radius: 8px; background: #2563eb; color: white; text-decoration: none; cursor: pointer; }
+        button:disabled { opacity: .6; cursor: wait; }
+        .delete { background: #dc2626; }
+        .file, .record { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid #e2e8f0; overflow-wrap: anywhere; }
+        .file:last-child, .record:last-child { border-bottom: 0; }
+        .file-info { min-width: 0; }
+        .muted { color: #64748b; font-size: 14px; }
+        .message { padding: 12px; margin: 10px 0; background: #eff6ff; border-radius: 8px; overflow-wrap: anywhere; }
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .actions form { margin: 0; }
+        .online-dot { display: inline-block; width: 9px; height: 9px; background: #16a34a; border-radius: 50%; margin-right: 7px; }
+        .tag { display: inline-block; font-size: 12px; background: #dbeafe; color: #1d4ed8; padding: 3px 7px; border-radius: 999px; margin-left: 6px; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .small-button { padding: 8px 11px; }
+        .empty { color: #64748b; padding: 10px 0; }
+        .record { display: block; }
+        .record-title { font-weight: bold; }
+        .record-meta { color: #64748b; font-size: 13px; margin-top: 4px; }
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            .panel { padding: 16px; }
+            .file { align-items: flex-start; flex-direction: column; }
         }
     </style>
 </head>
-
 <body>
-    <main>
-        <section class="panel">
-            <h1>LAN Share</h1>
-            <p>ส่งไฟล์ภายในเครือข่ายของคุณ</p>
-            <p class="muted">ไฟล์จะถูกเก็บไว้บนคอมที่รันเซิร์ฟเวอร์</p>
-        </section>
-
-        <section class="panel">
-            <h2>อัปโหลดไฟล์</h2>
-
-
-            <form id="uploadForm" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
-
-                <label for="file">เลือกไฟล์ที่ต้องการส่ง</label>
-                <input id="file" type="file" name="file" required>
-
-                <button id="uploadButton" type="submit">
-                    อัปโหลดไฟล์
-                </button>
-
-                <div id="uploadStatus" class="message" hidden></div>
-
-                <div id="progressArea" hidden>
-                    <p id="progressText">กำลังเตรียมอัปโหลด...</p>
-
-                    <progress id="progressBar" value="0" max="100" style="width:100%; height:24px;">
-                    </progress>
-                </div>
+<main>
+    <section class="panel">
+        <div class="topbar">
+            <div>
+                <h1>LAN Share</h1>
+                <p>ส่งไฟล์ภายในเครือข่ายของคุณ</p>
+                <p class="muted">ล็อกอินเป็น <strong>{{ device_name }}</strong> · รายการและสถานะอัปเดตอัตโนมัติ</p>
+            </div>
+            <form action="{{ url_for('logout') }}" method="post">
+                <button class="small-button" type="submit">ออกจากระบบ</button>
             </form>
+        </div>
+        <p id="connectionStatus" class="muted">กำลังเชื่อมต่อ...</p>
+    </section>
 
-        </section>
+    <section class="panel">
+        <h2>อัปโหลดไฟล์</h2>
+        <form id="uploadForm" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+            <label for="file">เลือกไฟล์ที่ต้องการส่ง</label>
+            <input id="file" type="file" name="file" required>
+            <button id="uploadButton" type="submit">อัปโหลดไฟล์</button>
+            <div id="uploadStatus" class="message" hidden></div>
+            <div id="progressArea" hidden>
+                <p id="progressText">กำลังเตรียมอัปโหลด...</p>
+                <progress id="progressBar" value="0" max="100" style="width:100%; height:24px;"></progress>
+            </div>
+        </form>
+    </section>
 
-        <section class="panel">
-            <h2>ไฟล์ทั้งหมด ({{ files|length }})</h2>
-
+    <section class="panel">
+        <h2>ไฟล์ทั้งหมด (<span id="fileCount">{{ files|length }}</span>)</h2>
+        <div id="fileList">
             {% for file in files %}
             <div class="file">
-                <div class="file-info">
-                    <strong>{{ file.name }}</strong>
-                    <p class="muted">{{ file.size }}</p>
-                </div>
-
+                <div class="file-info"><strong>{{ file.name }}</strong><p class="muted">{{ file.size }}</p></div>
                 <div class="actions">
-                    <a class="download" href="{{ url_for('download_file', filename=file.name) }}">
-                        ดาวน์โหลด
-                    </a>
-
-                    <form action="{{ url_for('delete_file', filename=file.name) }}" method="post"
-                        onsubmit="return confirm('ยืนยันการลบไฟล์นี้?')">
+                    <a class="download" href="{{ url_for('download_file', filename=file.name) }}">ดาวน์โหลด</a>
+                    <form action="{{ url_for('delete_file', filename=file.name) }}" method="post" class="deleteForm" data-filename="{{ file.name }}">
                         <button class="delete" type="submit">ลบ</button>
                     </form>
                 </div>
             </div>
-            {% else %}
-            <p class="muted">ยังไม่มีไฟล์ ลองอัปโหลดไฟล์แรกของคุณ</p>
-            {% endfor %}
-        </section>
-    </main>
+            {% else %}<p class="empty">ยังไม่มีไฟล์ ลองอัปโหลดไฟล์แรกของคุณ</p>{% endfor %}
+        </div>
+    </section>
 
-    <script>
-        const form = document.getElementById("uploadForm");
-        const fileInput = document.getElementById("file");
-        const uploadButton = document.getElementById("uploadButton");
-        const uploadStatus = document.getElementById("uploadStatus");
-        const progressArea = document.getElementById("progressArea");
-        const progressBar = document.getElementById("progressBar");
-        const progressText = document.getElementById("progressText");
+    <section class="panel">
+        <h2>เครื่องที่กำลังออนไลน์ (<span id="onlineCount">0</span>)</h2>
+        <p class="muted">แสดงเครื่องที่ส่งสัญญาณล่าสุดภายใน 45 วินาที</p>
+        <div id="onlineUsers"><p class="empty">กำลังโหลดข้อมูล...</p></div>
+    </section>
 
-        form.addEventListener("submit", function (event) {
-            event.preventDefault();
+    <section class="panel">
+        <h2>ประวัติการใช้งานล่าสุด</h2>
+        <p class="muted">เก็บประวัติล็อกอิน ออกจากระบบ อัปโหลด ดาวน์โหลด และลบไฟล์</p>
+        <div id="activityLog"><p class="empty">กำลังโหลดประวัติ...</p></div>
+    </section>
+</main>
+<script>
+    const form = document.getElementById("uploadForm");
+    const fileInput = document.getElementById("file");
+    const uploadButton = document.getElementById("uploadButton");
+    const uploadStatus = document.getElementById("uploadStatus");
+    const progressArea = document.getElementById("progressArea");
+    const progressBar = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
+    const fileList = document.getElementById("fileList");
+    const onlineUsers = document.getElementById("onlineUsers");
+    const activityLog = document.getElementById("activityLog");
+    const connectionStatus = document.getElementById("connectionStatus");
 
-            const file = fileInput.files[0];
+    const actionLabels = {
+        login: "เข้าสู่ระบบ", logout: "ออกจากระบบ", upload: "อัปโหลด",
+        download: "ดาวน์โหลด", delete: "ลบไฟล์"
+    };
 
-            if (!file) {
-                showStatus("กรุณาเลือกไฟล์ก่อน", false);
+    form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        const file = fileInput.files[0];
+        if (!file) { showStatus("กรุณาเลือกไฟล์ก่อน", false); return; }
+        const formData = new FormData(form);
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", form.action);
+        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+        uploadButton.disabled = true;
+        fileInput.disabled = true;
+        progressArea.hidden = false;
+        progressBar.value = 0;
+        progressText.textContent = "กำลังเริ่มอัปโหลด...";
+        showStatus("กำลังส่งไฟล์ " + file.name, true);
+
+        xhr.upload.addEventListener("progress", function (event) {
+            if (!event.lengthComputable) {
+                progressText.textContent = "กำลังอัปโหลด " + formatBytes(event.loaded);
                 return;
             }
-
-            const data = new FormData(form);
-            const xhr = new XMLHttpRequest();
-
-            uploadButton.disabled = true;
-            fileInput.disabled = true;
-
-            progressArea.hidden = false;
-            progressBar.value = 0;
-            progressText.textContent = "กำลังเริ่มอัปโหลด...";
-            showStatus("กำลังส่งไฟล์ " + file.name, true);
-
-            xhr.open("POST", form.action);
-            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-
-            xhr.upload.addEventListener("progress", function (event) {
-                if (!event.lengthComputable) {
-                    progressText.textContent =
-                        "กำลังอัปโหลด " + formatBytes(event.loaded);
-                    return;
-                }
-
-                const percent = Math.round(
-                    event.loaded / event.total * 100
-                );
-
-                progressBar.value = percent;
-                progressText.textContent =
-                    percent + "% (" +
-                    formatBytes(event.loaded) + " / " +
-                    formatBytes(event.total) + ")";
-            });
-
-            xhr.addEventListener("load", function () {
-                let result;
-
-                try {
-                    result = JSON.parse(xhr.responseText);
-                } catch {
-                    result = {
-                        success: false,
-                        message: "เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง"
-                    };
-                }
-
-                if (xhr.status >= 200 && xhr.status < 300 &&
-                    result.success) {
-                    progressBar.value = 100;
-                    progressText.textContent = "อัปโหลดเสร็จแล้ว";
-                    showStatus(result.message, true);
-
-                    setTimeout(function () {
-                        window.location.reload();
-                    }, 800);
-                } else {
-                    showStatus(
-                        result.message || "อัปโหลดไม่สำเร็จ",
-                        false
-                    );
-                    uploadButton.disabled = false;
-                    fileInput.disabled = false;
-                }
-            });
-
-            xhr.addEventListener("error", function () {
-                showStatus(
-                    "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบเครือข่าย",
-                    false
-                );
-                uploadButton.disabled = false;
-                fileInput.disabled = false;
-            });
-
-            xhr.addEventListener("abort", function () {
-                showStatus("การอัปโหลดถูกยกเลิก", false);
-                uploadButton.disabled = false;
-                fileInput.disabled = false;
-            });
-
-            xhr.send(data);
+            const percent = Math.round(event.loaded / event.total * 100);
+            progressBar.value = percent;
+            progressText.textContent = percent + "% (" + formatBytes(event.loaded) + " / " + formatBytes(event.total) + ")";
         });
+        xhr.addEventListener("load", async function () {
+            let result;
+            try { result = JSON.parse(xhr.responseText); }
+            catch { result = { success: false, message: xhr.status === 401 ? "เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่" : "เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง" }; }
 
-        function showStatus(message, success) {
-            uploadStatus.hidden = false;
-            uploadStatus.textContent = message;
-            uploadStatus.style.background =
-                success ? "#eff6ff" : "#fef2f2";
-            uploadStatus.style.color =
-                success ? "#1d4ed8" : "#b91c1c";
-        }
-
-        function formatBytes(bytes) {
-            const units = ["B", "KB", "MB", "GB", "TB"];
-            let size = bytes;
-            let index = 0;
-
-            while (size >= 1024 && index < units.length - 1) {
-                size /= 1024;
-                index++;
+            if (xhr.status >= 200 && xhr.status < 300 && result.success) {
+                progressBar.value = 100;
+                progressText.textContent = "อัปโหลดเสร็จแล้ว";
+                showStatus(result.message, true);
+                fileInput.value = "";
+                await refreshStatus();
+            } else {
+                showStatus(result.message || "อัปโหลดไม่สำเร็จ", false);
             }
+            uploadButton.disabled = false;
+            fileInput.disabled = false;
+        });
+        xhr.addEventListener("error", function () {
+            showStatus("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบเครือข่าย", false);
+            uploadButton.disabled = false; fileInput.disabled = false;
+        });
+        xhr.send(formData);
+    });
 
-            return size.toFixed(1) + " " + units[index];
+    document.addEventListener("submit", async function (event) {
+        const deleteForm = event.target.closest(".deleteForm");
+        if (!deleteForm) return;
+        event.preventDefault();
+        const filename = deleteForm.dataset.filename || "ไฟล์นี้";
+        if (!confirm("ยืนยันการลบ " + filename + " ?")) return;
+        const button = deleteForm.querySelector("button");
+        button.disabled = true;
+        try {
+            const response = await fetch(deleteForm.action, {
+                method: "POST",
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success) throw new Error(result.message || "ลบไฟล์ไม่สำเร็จ");
+            showStatus(result.message, true);
+            await refreshStatus();
+        } catch (error) {
+            showStatus(error.message || "ลบไฟล์ไม่สำเร็จ", false);
+            button.disabled = false;
         }
-    </script>
+    });
 
+    async function refreshStatus() {
+        try {
+            const heartbeat = await fetch("{{ url_for('heartbeat') }}", {
+                method: "POST", headers: { "X-Requested-With": "XMLHttpRequest" }
+            });
+            if (heartbeat.status === 401) { connectionStatus.textContent = "เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่"; return; }
+
+            const response = await fetch("{{ url_for('api_status') }}", { cache: "no-store" });
+            if (response.status === 401) { connectionStatus.textContent = "เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่"; return; }
+            if (!response.ok) throw new Error("HTTP " + response.status);
+            const data = await response.json();
+            renderFiles(data.files || []);
+            renderOnlineUsers(data.online_users || []);
+            renderActivity(data.activity || []);
+            connectionStatus.textContent = "เชื่อมต่ออยู่ · อัปเดตล่าสุด " + new Date().toLocaleTimeString();
+        } catch (error) {
+            connectionStatus.textContent = "อัปเดตข้อมูลไม่ได้ · จะลองใหม่อัตโนมัติ";
+        }
+    }
+
+    function renderFiles(files) {
+        document.getElementById("fileCount").textContent = files.length;
+        fileList.replaceChildren();
+        if (!files.length) {
+            const empty = document.createElement("p"); empty.className = "empty"; empty.textContent = "ยังไม่มีไฟล์ ลองอัปโหลดไฟล์แรกของคุณ";
+            fileList.appendChild(empty); return;
+        }
+        for (const file of files) {
+            const row = document.createElement("div"); row.className = "file";
+            const info = document.createElement("div"); info.className = "file-info";
+            const name = document.createElement("strong"); name.textContent = file.name;
+            const size = document.createElement("p"); size.className = "muted"; size.textContent = file.size + " · แก้ไข " + new Date(file.modified * 1000).toLocaleString();
+            info.append(name, size);
+            const actions = document.createElement("div"); actions.className = "actions";
+            const download = document.createElement("a"); download.className = "download"; download.textContent = "ดาวน์โหลด"; download.href = "/download/" + encodeURIComponent(file.name);
+            const deleteForm = document.createElement("form"); deleteForm.className = "deleteForm"; deleteForm.method = "post"; deleteForm.action = "/delete/" + encodeURIComponent(file.name); deleteForm.dataset.filename = file.name;
+            const deleteButton = document.createElement("button"); deleteButton.type = "submit"; deleteButton.className = "delete"; deleteButton.textContent = "ลบ";
+            deleteForm.appendChild(deleteButton); actions.append(download, deleteForm); row.append(info, actions); fileList.appendChild(row);
+        }
+    }
+
+    function renderOnlineUsers(users) {
+        document.getElementById("onlineCount").textContent = users.length;
+        onlineUsers.replaceChildren();
+        if (!users.length) { const p = document.createElement("p"); p.className = "empty"; p.textContent = "ยังไม่มีเครื่องออนไลน์"; onlineUsers.appendChild(p); return; }
+        for (const user of users) {
+            const row = document.createElement("div"); row.className = "record";
+            const title = document.createElement("div"); title.className = "record-title";
+            const dot = document.createElement("span"); dot.className = "online-dot";
+            title.append(dot, document.createTextNode(user.device_name));
+            if (user.is_me) { const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = "เครื่องนี้"; title.appendChild(tag); }
+            const meta = document.createElement("div"); meta.className = "record-meta";
+            meta.textContent = "IP: " + user.ip_address + " · Login: " + new Date(user.login_at * 1000).toLocaleString() + " · " + (user.user_agent || "ไม่ทราบเบราว์เซอร์");
+            row.append(title, meta); onlineUsers.appendChild(row);
+        }
+    }
+
+    function renderActivity(entries) {
+        activityLog.replaceChildren();
+        if (!entries.length) { const p = document.createElement("p"); p.className = "empty"; p.textContent = "ยังไม่มีประวัติการใช้งาน"; activityLog.appendChild(p); return; }
+        for (const entry of entries) {
+            const row = document.createElement("div"); row.className = "record";
+            const title = document.createElement("div"); title.className = "record-title";
+            title.textContent = (actionLabels[entry.action] || entry.action) + " · " + entry.device_name;
+            const meta = document.createElement("div"); meta.className = "record-meta";
+            meta.textContent = new Date(entry.timestamp * 1000).toLocaleString() + " · IP: " + entry.ip_address + " · " + entry.detail;
+            row.append(title, meta); activityLog.appendChild(row);
+        }
+    }
+
+    function showStatus(message, success) {
+        uploadStatus.hidden = false;
+        uploadStatus.textContent = message;
+        uploadStatus.style.background = success ? "#eff6ff" : "#fef2f2";
+        uploadStatus.style.color = success ? "#1d4ed8" : "#b91c1c";
+    }
+
+    function formatBytes(bytes) {
+        const units = ["B", "KB", "MB", "GB", "TB"];
+        let size = bytes, index = 0;
+        while (size >= 1024 && index < units.length - 1) { size /= 1024; index++; }
+        return size.toFixed(1) + " " + units[index];
+    }
+
+    refreshStatus();
+    setInterval(refreshStatus, 3000);
+</script>
 </body>
-
 </html>

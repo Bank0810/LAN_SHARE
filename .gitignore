@@ -1,0 +1,10 @@
+﻿.venv/
+__pycache__/
+*.py[cod]
+.env
+lanshare.db
+lanshare.db-shm
+lanshare.db-wal
+storage/*
+!storage/.gitkeep
+.vscode/
