@@ -1,0 +1,55 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LAN Share - Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 60px auto;
+            padding: 20px;
+            background: #f1f5f9;
+        }
+        main {
+            background: white;
+            padding: 24px;
+            border-radius: 14px;
+        }
+        input, button {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            margin-top: 12px;
+            font: inherit;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: 0;
+            border-radius: 8px;
+        }
+        .error { color: #b91c1c; }
+    </style>
+</head>
+<body>
+<main>
+    <h1>LAN Share</h1>
+    <p>กรอก PIN เพื่อเข้าใช้งาน</p>
+
+    {% for message in get_flashed_messages() %}
+        <p class="error">{{ message }}</p>
+    {% endfor %}
+
+    <form method="post" action="{{ url_for('login') }}">
+        <label for="pin">PIN</label>
+        <input id="pin" name="pin" type="password"
+               inputmode="numeric" autocomplete="current-password"
+               required autofocus>
+        <button type="submit">เข้าสู่ระบบ</button>
+    </form>
+</main>
+</body>
+</html>
